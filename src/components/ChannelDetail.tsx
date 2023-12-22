@@ -1,41 +1,47 @@
-import React from 'react';
-import { Box, CardContent, CardMedia, Typography } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { Box } from "@mui/material";
 
-const ChannelCard = ({ channelDetail, marginTop }) => (
-  <Box
-    sx={{
-      boxShadow: 'none',
-      borderRadius: '20px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: { xs: '356px', md: '320px' },
-      height: '326px',
-      margin: 'auto',
-      marginTop,
-    }}
-  >
-    <Link to={`/channel/${channelDetail?.id?.channelId}`}>
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center', color: '#fff' }}>
-        <CardMedia
-          image={channelDetail?.snippet?.thumbnails?.high?.url || demoProfilePicture}
-          alt={channelDetail?.snippet?.title}
-          sx={{ borderRadius: '50%', height: '180px', width: '180px', mb: 2, border: '1px solid #e3e3e3' }}
-        />
-        <Typography variant="h6">
-          {channelDetail?.snippet?.title}{' '}
-          <CheckCircleIcon sx={{ fontSize: '14px', color: 'gray', ml: '5px' }} />
-        </Typography>
-        {channelDetail?.statistics?.subscriberCount && (
-          <Typography sx={{ fontSize: '15px', fontWeight: 500, color: 'gray' }}>
-            {parseInt(channelDetail?.statistics?.subscriberCount).toLocaleString('en-US')} Subscribers
-          </Typography>
-        )}
-      </CardContent>
-    </Link>
-  </Box>
-);
+import { fetchFromAPI } from "../utils/fetchFromAPI";
+import Videos from "./Videos";
+import ChannelCard from "./ChannelCard";
 
-export default ChannelCard;
+const ChannelDetail = () => {
+  const [channelDetail, setChannelDetail] = useState();
+  const [videos, setVideos] = useState(null);
+
+  const { id } = useParams();
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      const data = await fetchFromAPI(`channels?part=snippet&id=${id}`);
+
+      setChannelDetail(data?.items[0]);
+
+      const videosData = await fetchFromAPI(`search?channelId=${id}&part=snippet%2Cid&order=date`);
+
+      setVideos(videosData?.items);
+    };
+
+    fetchResults();
+  }, [id]);
+
+  return (
+    <Box minHeight="95vh">
+      <Box>
+        <div style={{
+          height:'300px',
+          background: 'linear-gradient(90deg, rgba(0,238,247,1) 0%, rgba(206,3,184,1) 100%, rgba(0,212,255,1) 100%)',
+          zIndex: 10,
+        }} />
+        <ChannelCard channelDetail={channelDetail} marginTop="-93px" />
+      </Box>
+      <Box p={2} display="flex">
+      <Box sx={{ mr: { sm: '100px' } }}/>
+        <Videos videos={videos} />
+      </Box>
+    </Box>
+  );
+};
+
+export default ChannelDetail;
